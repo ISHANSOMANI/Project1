@@ -13,3 +13,5 @@ The foreground service keeps the timer running while the app is in the backgroun
 
 ## Build
 GitHub Actions builds `app-debug.apk` on every push to `main`.
+
+Build trigger refreshed for APK generation.
