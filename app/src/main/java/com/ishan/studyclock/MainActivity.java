@@ -2,6 +2,7 @@ package com.ishan.studyclock;
 
 import android.Manifest;
 import android.app.Activity;
+import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
@@ -146,7 +147,7 @@ public class MainActivity extends Activity {
         ArrayAdapter<StudyDb.Course> adapter = new ArrayAdapter<StudyDb.Course>(this, android.R.layout.simple_spinner_dropdown_item, courses) {
             @Override public View getView(int position, View convertView, ViewGroup parent) {
                 TextView tv = (TextView) super.getView(position, convertView, parent);
-                tv.setTextColor(TEXT); tv.setTextSize(16); tv.setPadding(dp(8),0,dp(8),0); return tv;
+                tv.setTextColor(Color.rgb(17,27,46)); tv.setTextSize(16); tv.setPadding(dp(8),0,dp(8),0); return tv;
             }
             @Override public View getDropDownView(int position, View convertView, ViewGroup parent) {
                 TextView tv = (TextView) super.getDropDownView(position, convertView, parent);
@@ -292,7 +293,7 @@ public class MainActivity extends Activity {
             LinearLayout block=new LinearLayout(this); block.setOrientation(LinearLayout.VERTICAL); block.setPadding(0,dp(8),0,dp(8));
             LinearLayout row=new LinearLayout(this); row.setOrientation(LinearLayout.HORIZONTAL);
             TextView name=text(x.code+" · "+x.name,13,TEXT,true); row.addView(name,new LinearLayout.LayoutParams(0,-2,1f)); row.addView(text(formatHuman(x.durationMs),12,MUTED,false)); block.addView(row);
-            ProgressBar pb=new ProgressBar(this,null,android.R.attr.progressBarStyleHorizontal); pb.setMax(1000); pb.setProgress((int)Math.round(1000.0*x.durationMs/max)); pb.getProgressDrawable().setTint(TEAL);
+            ProgressBar pb=new ProgressBar(this,null,android.R.attr.progressBarStyleHorizontal); pb.setMax(1000); pb.setProgress((int)Math.round(1000.0*x.durationMs/max)); pb.getProgressDrawable().setTint(TEAL); pb.getProgressDrawable().setColorFilter(TEAL,android.graphics.PorterDuff.Mode.SRC_IN);
             LinearLayout.LayoutParams pp=new LinearLayout.LayoutParams(-1,dp(8)); pp.topMargin=dp(6); block.addView(pb,pp); page.addView(block);
         }
         sc.addView(page); content.addView(sc);
@@ -304,12 +305,13 @@ public class MainActivity extends Activity {
     private TextView label(String s){ TextView t=text(s,12,MUTED,true); t.setPadding(0,0,0,dp(7)); return t; }
     private LinearLayout card(){ LinearLayout c=new LinearLayout(this); c.setOrientation(LinearLayout.VERTICAL); c.setPadding(dp(16),dp(16),dp(16),dp(16)); c.setBackground(round(SURFACE,LINE,18)); return c; }
     private TextView text(String s,float sp,int color,boolean bold){ TextView t=new TextView(this); t.setText(s); t.setTextSize(sp); t.setTextColor(color); if(bold)t.setTypeface(Typeface.DEFAULT,Typeface.BOLD); t.setLineSpacing(0,1.08f); return t; }
-    private Button button(String s,boolean primary){ Button b=new Button(this); b.setText(s); b.setTextAllCaps(false); b.setTextSize(15); b.setTypeface(Typeface.DEFAULT,Typeface.BOLD); b.setTextColor(primary?BG:TEXT); b.setBackground(round(primary?TEAL:CARD,primary?TEAL:LINE,14)); return b; }
+    private Button button(String s,boolean primary){ Button b=new Button(this); b.setText(s); b.setAllCaps(false); b.setTextSize(15); b.setTypeface(Typeface.DEFAULT,Typeface.BOLD); b.setTextColor(primary?BG:TEXT); b.setBackground(round(primary?TEAL:CARD,primary?TEAL:LINE,14)); return b; }
     private GradientDrawable round(int fill,int stroke,int r){ GradientDrawable g=new GradientDrawable(); g.setColor(fill); g.setCornerRadius(dp(r)); g.setStroke(dp(1),stroke); return g; }
     private int dp(int x){ return Math.round(x*getResources().getDisplayMetrics().density); }
     private static String formatHms(long ms){ long sec=Math.max(0,ms/1000),h=sec/3600,m=(sec%3600)/60,s=sec%60; return String.format(Locale.US,"%02d:%02d:%02d",h,m,s); }
     private static String formatHuman(long ms){ long min=Math.max(0,Math.round(ms/60000f)); long h=min/60,m=min%60; return h>0 ? String.format(Locale.US,"%dh %02dm",h,m) : String.format(Locale.US,"%dm",m); }
 
     @Override protected void onResume(){ super.onResume(); if(timerText!=null){ uiHandler.removeCallbacks(uiTick); uiHandler.post(uiTick);} }
+    @Override protected void onPause(){ super.onPause(); }
     @Override protected void onDestroy(){ uiHandler.removeCallbacks(uiTick); super.onDestroy(); }
 }
