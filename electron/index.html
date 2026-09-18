@@ -1,0 +1,64 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>StudyClock TIET</title>
+<style>
+:root{--bg:#0b1220;--panel:#111b2e;--card:#16243b;--line:#2b3d56;--text:#eaf2ff;--muted:#8fa3bd;--accent:#5fc7c1}
+*{box-sizing:border-box}body{margin:0;font-family:Segoe UI,Arial,sans-serif;background:var(--bg);color:var(--text)}
+.app{max-width:1000px;margin:auto;padding:24px}.top{display:flex;justify-content:space-between;gap:16px;align-items:center;margin-bottom:20px}
+h1,h2,p{margin-top:0}.muted{color:var(--muted)}.nav{display:flex;gap:8px;flex-wrap:wrap}
+button,select,input{font:inherit}.nav button,.btn{border:1px solid var(--line);background:var(--card);color:var(--text);padding:11px 15px;border-radius:12px;cursor:pointer}
+.btn.primary{background:var(--accent);color:#071317;border-color:var(--accent);font-weight:800}.page{display:none}.page.active{display:block}
+.grid{display:grid;grid-template-columns:1.2fr .8fr;gap:18px}.panel{background:var(--panel);border:1px solid var(--line);border-radius:20px;padding:20px}
+.timer{font:800 clamp(52px,9vw,92px)/1 ui-monospace,Consolas,monospace;text-align:center;margin:40px 0 12px}
+.state{text-align:center;color:var(--muted)}.field{margin:14px 0}.field label{display:block;font-size:12px;color:var(--muted);margin-bottom:6px;font-weight:700}
+.field input,.field select{width:100%;background:var(--card);color:var(--text);border:1px solid var(--line);border-radius:12px;padding:13px}
+.actions{display:grid;grid-template-columns:1.3fr 1fr;gap:10px}.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin:18px 0}.stat{background:var(--panel);border:1px solid var(--line);border-radius:16px;padding:16px}.stat strong{display:block;font-size:28px}
+.list{display:grid;gap:10px}.row{display:flex;justify-content:space-between;gap:14px;background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:14px}
+.accent{color:var(--accent);font-weight:800}.small{font-size:12px}.empty{color:var(--muted);padding:25px;text-align:center;border:1px dashed var(--line);border-radius:14px}
+@media(max-width:760px){.top{align-items:flex-start;flex-direction:column}.grid{grid-template-columns:1fr}.stats{grid-template-columns:1fr}.actions{grid-template-columns:1fr}}
+</style></head>
+<body><div class="app">
+<div class="top"><div><h1>StudyClock</h1><div class="muted">TIET · Pool B · Semester 1</div></div>
+<div class="nav"><button data-p="clock">Clock</button><button data-p="records">Records</button><button data-p="courses">Courses</button><button data-p="stats">Stats</button></div></div>
+
+<section id="clock" class="page active"><div class="grid">
+<div class="panel"><div class="accent small">FOCUS CLOCK</div><div id="timer" class="timer">00:00:00</div><div id="state" class="state">Ready when you are</div></div>
+<div class="panel"><div class="field"><label>Course</label><select id="course"></select></div><div class="field"><label>Topic / chapter</label><input id="topic" placeholder="e.g. Wave optics"></div>
+<div class="actions"><button id="start" class="btn primary">Start studying</button><button id="stop" class="btn" disabled>Stop & save</button></div></div>
+</div><div class="stats"><div class="stat"><span class="muted small">TODAY</span><strong id="today">0h 00m</strong></div><div class="stat"><span class="muted small">LAST 7 DAYS</span><strong id="week">0h 00m</strong></div><div class="stat"><span class="muted small">ALL TIME</span><strong id="all">0h 00m</strong></div></div></section>
+
+<section id="records" class="page"><h2>Study records</h2><div id="recordList" class="list"></div></section>
+<section id="courses" class="page"><h2>Pool B courses</h2><div id="courseList" class="list"></div></section>
+<section id="stats" class="page"><h2>Course totals</h2><div id="statsList" class="list"></div></section>
+</div>
+<script>
+const COURSES=[
+{code:'UPH013',name:'Physics'},{code:'UES101',name:'Engineering Drawing'},
+{code:'UHU003',name:'Professional Communication'},{code:'UES102',name:'Manufacturing Processes'},
+{code:'UMA023',name:'Differential Equations & Linear Algebra'}];
+const K1='sc.sessions',K2='sc.timer';let sessions=JSON.parse(localStorage.getItem(K1)||'[]');
+let t=JSON.parse(localStorage.getItem(K2)||'{"active":false,"paused":false,"start":0,"pauseAt":0,"pausedMs":0,"course":"","name":"","topic":""}');
+const q=s=>document.querySelector(s),qq=s=>[...document.querySelectorAll(s)];
+COURSES.forEach(c=>{let o=document.createElement('option');o.value=c.code;o.textContent=c.code+' · '+c.name;q('#course').appendChild(o)});
+function save(){localStorage.setItem(K1,JSON.stringify(sessions));localStorage.setItem(K2,JSON.stringify(t))}
+function elapsed(){if(!t.active)return 0;let end=t.paused?t.pauseAt:Date.now();return Math.max(0,end-t.start-t.pausedMs)}
+function hms(ms){let s=Math.floor(ms/1000),h=Math.floor(s/3600),m=Math.floor((s%3600)/60),x=s%60;return [h,m,x].map(v=>String(v).padStart(2,'0')).join(':')}
+function human(ms){let m=Math.floor(ms/60000);return Math.floor(m/60)+'h '+String(m%60).padStart(2,'0')+'m'}
+function day0(){let d=new Date();d.setHours(0,0,0,0);return d.getTime()}
+function sum(a,b){return sessions.filter(x=>x.start>=a&&x.start<b).reduce((n,x)=>n+x.ms,0)}
+function update(){
+let ms=elapsed();q('#timer').textContent=hms(ms);q('#state').textContent=t.active?((t.paused?'Paused':'Studying')+' · '+t.course+(t.topic?' · '+t.topic:'')):'Ready when you are';
+q('#start').textContent=!t.active?'Start studying':t.paused?'Resume':'Pause';q('#stop').disabled=!t.active;q('#course').disabled=t.active;q('#topic').disabled=t.active;
+if(t.active){q('#course').value=t.course;q('#topic').value=t.topic}
+let d=day0(),tom=d+86400000,w=d-6*86400000,r=t.active&&t.start>=d?ms:0;q('#today').textContent=human(sum(d,tom)+r);q('#week').textContent=human(sum(w,tom)+r);q('#all').textContent=human(sessions.reduce((n,x)=>n+x.ms,0)+r)
+}
+q('#start').onclick=()=>{if(!t.active){let c=COURSES.find(x=>x.code===q('#course').value);t={active:true,paused:false,start:Date.now(),pauseAt:0,pausedMs:0,course:c.code,name:c.name,topic:q('#topic').value.trim()}}else if(!t.paused){t.paused=true;t.pauseAt=Date.now()}else{t.pausedMs+=Date.now()-t.pauseAt;t.paused=false;t.pauseAt=0}save();update()}
+q('#stop').onclick=()=>{if(!t.active)return;let ms=elapsed();if(ms>=1000)sessions.unshift({start:t.start,ms,course:t.course,name:t.name,topic:t.topic});t={active:false,paused:false,start:0,pauseAt:0,pausedMs:0,course:'',name:'',topic:''};q('#topic').value='';save();update()}
+function renderRecords(){let e=q('#recordList');e.innerHTML='';if(!sessions.length){e.innerHTML='<div class="empty">No sessions yet.</div>';return}sessions.forEach(x=>{let r=document.createElement('div');r.className='row';r.innerHTML='<div><b>'+x.course+' · '+x.name+'</b><div class="muted small">'+(x.topic?x.topic+' · ':'')+new Date(x.start).toLocaleString()+'</div></div><div class="accent">'+human(x.ms)+'</div>';e.appendChild(r)})}
+function totals(){let z={};COURSES.forEach(c=>z[c.code]=0);sessions.forEach(x=>z[x.course]=(z[x.course]||0)+x.ms);return z}
+function renderCourses(target){let e=q(target),z=totals();e.innerHTML='';COURSES.forEach(c=>{let r=document.createElement('div');r.className='row';r.innerHTML='<div><b>'+c.code+'</b><div class="muted small">'+c.name+'</div></div><div class="accent">'+human(z[c.code])+'</div>';e.appendChild(r)})}
+qq('.nav button').forEach(b=>b.onclick=()=>{qq('.page').forEach(p=>p.classList.remove('active'));q('#'+b.dataset.p).classList.add('active');if(b.dataset.p==='records')renderRecords();if(b.dataset.p==='courses')renderCourses('#courseList');if(b.dataset.p==='stats')renderCourses('#statsList')});
+update();setInterval(update,500);
+</script></body></html>
