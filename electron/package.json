@@ -1,0 +1,26 @@
+{
+  "name": "studyclock-tiet",
+  "version": "1.0.0",
+  "description": "Timer-first study tracker for TIET Pool B Semester 1",
+  "main": "main.js",
+  "author": "Ishan",
+  "license": "MIT",
+  "scripts": {
+    "start": "electron .",
+    "dist": "electron-builder --win portable"
+  },
+  "devDependencies": {
+    "electron": "^38.1.2",
+    "electron-builder": "^26.0.12"
+  },
+  "build": {
+    "appId": "com.ishan.studyclock",
+    "productName": "StudyClock TIET",
+    "asar": true,
+    "files": ["main.js", "index.html", "package.json"],
+    "win": {
+      "target": ["portable"],
+      "artifactName": "StudyClock-TIET-Portable.exe"
+    }
+  }
+}
