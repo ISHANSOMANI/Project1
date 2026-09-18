@@ -1,0 +1,27 @@
+name: Build Electron Windows Binary
+on:
+  workflow_dispatch:
+  push:
+    branches: [ main ]
+    paths:
+      - 'electron/**'
+      - '.github/workflows/build-electron.yml'
+jobs:
+  build-windows:
+    runs-on: windows-latest
+    env:
+      CSC_IDENTITY_AUTO_DISCOVERY: 'false'
+    defaults:
+      run:
+        working-directory: electron
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: npm install --no-audit --no-fund
+      - run: npm run dist
+      - uses: actions/upload-artifact@v4
+        with:
+          name: StudyClock-TIET-Electron-Windows
+          path: electron/dist/StudyClock-TIET-Portable.exe
